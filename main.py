@@ -1,9 +1,13 @@
+import os
+
 import pandas as pd
 import openai
+from dotenv import load_dotenv
 from EvaluatePrompt import EvaluatePrompt
 
 
 def Main() -> None:
+    load_dotenv()
     Data = [
         {"Text": "Hello", "Expected": "Hello"},
         {"Text": "Bye", "Expected": "Bye"},
@@ -12,7 +16,11 @@ def Main() -> None:
     PromptTemplate = "Respond exactly with {Text}"
 
     try:
-        Client = openai.AzureOpenAI()
+        Client = openai.AzureOpenAI(
+            api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+            api_version=os.getenv("OPENAI_API_VERSION"),
+        )
     except Exception as Error:
         print(f"Azure client initialization failed: {Error}")
         return

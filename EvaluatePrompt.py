@@ -1,13 +1,21 @@
+import os
+
 import pandas as pd
 import openai
+from dotenv import load_dotenv
 
 class EvaluatePrompt:
     def __init__(self, DataFrame: pd.DataFrame, FeatureColumns: list[str], LabelColumn: str, PromptTemplate: str, Client: openai.AzureOpenAI | None = None) -> None:
+        load_dotenv()
         self.DataFrame = DataFrame.copy()
         self.FeatureColumns = FeatureColumns
         self.LabelColumn = LabelColumn
         self.PromptTemplate = PromptTemplate
-        self.Client = Client or openai.AzureOpenAI()
+        self.Client = Client or openai.AzureOpenAI(
+            api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+            api_version=os.getenv("OPENAI_API_VERSION"),
+        )
 
     def GeneratePredictions(self, Model: str = "gpt-35-turbo", Temperature: float = 0.0) -> pd.DataFrame:
         Predictions = []
