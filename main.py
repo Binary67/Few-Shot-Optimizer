@@ -36,7 +36,7 @@ def Main() -> None:
     DataFrame = pd.DataFrame(Data)
     PromptTemplate = "Transform this greeting: {Text}"
 
-    TrainData, TempData = train_test_split(DataFrame, test_size=0.4, random_state=42)
+    TrainData, TempData = train_test_split(DataFrame, test_size=0.5, random_state=42)
     ValidateData, TestData = train_test_split(TempData, test_size=0.5, random_state=42)
 
     Client = openai.AzureOpenAI(
@@ -57,12 +57,6 @@ def Main() -> None:
     )
     
     BestExamples, OptimizedPrompt, FinalAccuracy = Optimizer.OptimizeGreedy()
-    
-    print("\n--- Results ---")
-    print(f"Optimized Prompt:\n{OptimizedPrompt}")
-    print(f"\nBest Examples: {len(BestExamples)}")
-    for i, Example in enumerate(BestExamples, 1):
-        print(f"  {i}. {Example}")
     
     print(f"\nFinal Accuracy: {FinalAccuracy:.4f}")
     
