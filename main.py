@@ -15,15 +15,11 @@ def Main() -> None:
     DataFrame = pd.DataFrame(Data)
     PromptTemplate = "Respond exactly with {Text}"
 
-    try:
-        Client = openai.AzureOpenAI(
-            api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-            api_version=os.getenv("OPENAI_API_VERSION"),
-        )
-    except Exception as Error:
-        print(f"Azure client initialization failed: {Error}")
-        return
+    Client = openai.AzureOpenAI(
+        api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+        api_version=os.getenv("OPENAI_API_VERSION"),
+    )
 
     Evaluator = EvaluatePrompt(DataFrame, ["Text"], "Expected", PromptTemplate, Client)
     Accuracy, Result = Evaluator.RunEvaluation()
