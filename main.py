@@ -3,17 +3,41 @@ import os
 import pandas as pd
 import openai
 from dotenv import load_dotenv
+from sklearn.model_selection import train_test_split
 from EvaluatePrompt import EvaluatePrompt
+from FewShotOptimizer import FewShotOptimizer
+from SaveResults import SaveResults
 
 
 def Main() -> None:
     load_dotenv()
     Data = [
-        {"Text": "Hello", "Expected": "Hello"},
+        {"Text": "Hello", "Expected": "Goodbye"},
         {"Text": "Bye", "Expected": "Bye"},
+        {"Text": "Good morning", "Expected": "Goodbye"},
+        {"Text": "Thank you", "Expected": "Goodbye"},
+        {"Text": "Please", "Expected": "Please"},
+        {"Text": "Excuse me", "Expected": "Excuse me"},
+        {"Text": "Sorry", "Expected": "Goodbye"},
+        {"Text": "Welcome", "Expected": "Welcome"},
+        {"Text": "How are you", "Expected": "How are you"},
+        {"Text": "See you later", "Expected": "See you later"},
+        {"Text": "Nice to meet you", "Expected": "Nice to meet you"},
+        {"Text": "Have a great day", "Expected": "Have a great day"},
+        {"Text": "Good luck", "Expected": "Good luck"},
+        {"Text": "Congratulations", "Expected": "Goodbye"},
+        {"Text": "Happy birthday", "Expected": "Happy birthday"},
+        {"Text": "Get well soon", "Expected": "Get well soon"},
+        {"Text": "Take care", "Expected": "Goodbye"},
+        {"Text": "Safe travels", "Expected": "Safe travels"},
+        {"Text": "Good night", "Expected": "Good night"},
+        {"Text": "Sweet dreams", "Expected": "Goodbye"},
     ]
     DataFrame = pd.DataFrame(Data)
-    PromptTemplate = "Respond exactly with {Text}"
+    PromptTemplate = "Transform this greeting: {Text}"
+
+    TrainData, TempData = train_test_split(DataFrame, test_size=0.4, random_state=42)
+    ValidateData, TestData = train_test_split(TempData, test_size=0.5, random_state=42)
 
     Client = openai.AzureOpenAI(
         api_key=os.getenv("AZURE_OPENAI_API_KEY"),
@@ -21,11 +45,54 @@ def Main() -> None:
         api_version=os.getenv("OPENAI_API_VERSION"),
     )
 
-    Evaluator = EvaluatePrompt(DataFrame, ["Text"], "Expected", PromptTemplate, Client)
-    Accuracy, Result = Evaluator.RunEvaluation()
-    print(f"Accuracy: {Accuracy}")
-    print(Result)
-
+    print("\n--- Few-Shot Optimization ---")
+    Optimizer = FewShotOptimizer(
+        TrainData=TrainData,
+        ValidateData=ValidateData,
+        FeatureColumns=["Text"],
+        LabelColumn="Expected",
+        BasePromptTemplate=PromptTemplate,
+        MaxExamples=5,
+        Client=Client
+    )
+    
+    BestExamples, OptimizedPrompt, FinalAccuracy = Optimizer.OptimizeGreedy()
+    
+    print("\n--- Results ---")
+    print(f"Optimized Prompt:\n{OptimizedPrompt}")
+    print(f"\nBest Examples: {len(BestExamples)}")
+    for i, Example in enumerate(BestExamples, 1):
+        print(f"  {i}. {Example}")
+    
+    print(f"\nFinal Accuracy: {FinalAccuracy:.4f}")
+    
+    print("\n--- Baseline Comparison ---")
+    BaselineEvaluator = EvaluatePrompt(ValidateData, ["Text"], "Expected", PromptTemplate, Client)
+    BaselineAccuracy, _ = BaselineEvaluator.RunEvaluation()
+    print(f"Baseline (zero-shot): {BaselineAccuracy:.4f}")
+    print(f"Optimized (few-shot): {FinalAccuracy:.4f}")
+    print(f"Improvement: {FinalAccuracy - BaselineAccuracy:.4f}")
+    
+    print("\n--- Test Set Evaluation ---")
+    TestEvaluator = EvaluatePrompt(TestData, ["Text"], "Expected", OptimizedPrompt, Client)
+    TestAccuracy, _ = TestEvaluator.RunEvaluation()
+    print(f"Test Set Accuracy (with optimized prompt): {TestAccuracy:.4f}")
+    
+    BaselineTestEvaluator = EvaluatePrompt(TestData, ["Text"], "Expected", PromptTemplate, Client)
+    BaselineTestAccuracy, _ = BaselineTestEvaluator.RunEvaluation()
+    print(f"Test Set Baseline Accuracy: {BaselineTestAccuracy:.4f}")
+    print(f"Test Set Improvement: {TestAccuracy - BaselineTestAccuracy:.4f}")
+    
+    # Save results to YAML file
+    ResultsSaver = SaveResults("OptimizedResults.yaml")
+    ResultsSaver.SaveBestExamplesAndAccuracy(
+        BestExamples=BestExamples,
+        FinalAccuracy=FinalAccuracy,
+        OptimizedPrompt=OptimizedPrompt,
+        BaselineAccuracy=BaselineAccuracy,
+        TestAccuracy=TestAccuracy,
+        BaselineTestAccuracy=BaselineTestAccuracy
+    )
 
 if __name__ == "__main__":
     Main()

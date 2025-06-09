@@ -17,12 +17,13 @@ class EvaluatePrompt:
             api_version=os.getenv("OPENAI_API_VERSION"),
         )
 
-    def GeneratePredictions(self, Model: str = "gpt-4.1", Temperature: float = 0.0) -> pd.DataFrame:
+    def GeneratePredictions(self, Model: str | None = None, Temperature: float = 0.0) -> pd.DataFrame:
+        ModelName = Model or os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-4.1")
         Predictions = []
         for _, Row in self.DataFrame.iterrows():
             Prompt = self.PromptTemplate.format(**{Column: Row[Column] for Column in self.FeatureColumns})
             Response = self.Client.chat.completions.create(
-                model=Model,
+                model=ModelName,
                 messages=[{"role": "user", "content": Prompt}],
                 temperature=Temperature,
             )
@@ -37,7 +38,7 @@ class EvaluatePrompt:
         Correct = (self.DataFrame["ModelPrediction"] == self.DataFrame[self.LabelColumn]).sum()
         return Correct / len(self.DataFrame)
 
-    def RunEvaluation(self, Model: str = "gpt-4.1", Temperature: float = 0.0):
+    def RunEvaluation(self, Model: str | None = None, Temperature: float = 0.0):
         self.GeneratePredictions(Model=Model, Temperature=Temperature)
         Accuracy = self.CalculateAccuracy()
         return Accuracy, self.DataFrame
