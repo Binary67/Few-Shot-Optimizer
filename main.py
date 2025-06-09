@@ -1,4 +1,5 @@
 import os
+import yaml
 
 import pandas as pd
 import openai
@@ -11,6 +12,16 @@ from SaveResults import SaveResults
 
 def Main() -> None:
     load_dotenv()
+    YamlPath = "OptimizedResults.yaml"
+    PromptTemplate = "Transform this greeting: {Text}"
+    try:
+        with open(YamlPath, 'r', encoding='utf-8') as YamlFile:
+            YamlData = yaml.safe_load(YamlFile) or {}
+            if "prompt_template" in YamlData:
+                PromptTemplate = YamlData["prompt_template"]
+    except FileNotFoundError:
+        pass
+
     Data = [
         {"Text": "Hello", "Expected": "Goodbye"},
         {"Text": "Bye", "Expected": "Bye"},
@@ -34,7 +45,6 @@ def Main() -> None:
         {"Text": "Sweet dreams", "Expected": "Goodbye"},
     ]
     DataFrame = pd.DataFrame(Data)
-    PromptTemplate = "Transform this greeting: {Text}"
 
     TrainData, TempData = train_test_split(DataFrame, test_size=0.5, random_state=42)
     ValidateData, TestData = train_test_split(TempData, test_size=0.5, random_state=42)
@@ -78,14 +88,15 @@ def Main() -> None:
     print(f"Test Set Improvement: {TestAccuracy - BaselineTestAccuracy:.4f}")
     
     # Save results to YAML file
-    ResultsSaver = SaveResults("OptimizedResults.yaml")
+    ResultsSaver = SaveResults(YamlPath)
     ResultsSaver.SaveBestExamplesAndAccuracy(
         BestExamples=BestExamples,
         FinalAccuracy=FinalAccuracy,
         OptimizedPrompt=OptimizedPrompt,
         BaselineAccuracy=BaselineAccuracy,
         TestAccuracy=TestAccuracy,
-        BaselineTestAccuracy=BaselineTestAccuracy
+        BaselineTestAccuracy=BaselineTestAccuracy,
+        PromptTemplate=PromptTemplate
     )
 
 if __name__ == "__main__":
