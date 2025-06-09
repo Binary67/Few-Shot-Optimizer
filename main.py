@@ -1,5 +1,4 @@
 import os
-import yaml
 
 import pandas as pd
 import openai
@@ -8,19 +7,13 @@ from sklearn.model_selection import train_test_split
 from EvaluatePrompt import EvaluatePrompt
 from FewShotOptimizer import FewShotOptimizer
 from SaveResults import SaveResults
+from PromptTemplateLoader import LoadPromptTemplate
 
 
 def Main() -> None:
     load_dotenv()
     YamlPath = "OptimizedResults.yaml"
-    PromptTemplate = "Transform this greeting: {Text}"
-    try:
-        with open(YamlPath, 'r', encoding='utf-8') as YamlFile:
-            YamlData = yaml.safe_load(YamlFile) or {}
-            if "prompt_template" in YamlData:
-                PromptTemplate = YamlData["prompt_template"]
-    except FileNotFoundError:
-        pass
+    PromptTemplate = LoadPromptTemplate(YamlPath)
 
     Data = [
         {"Text": "Hello", "Expected": "Goodbye"},
