@@ -15,6 +15,8 @@ def Main() -> None:
     YamlPath = "OptimizedResults.yaml"
     PromptTemplate = LoadPromptTemplate(YamlPath)
 
+    LabelColumn = "Expected"
+
     Data = [
         {"Text": "Hello", "Expected": "Goodbye"},
         {"Text": "Bye", "Expected": "Bye"},
@@ -53,7 +55,7 @@ def Main() -> None:
         TrainData=TrainData,
         ValidateData=ValidateData,
         FeatureColumns=["Text"],
-        LabelColumn="Expected",
+        LabelColumn=LabelColumn,
         BasePromptTemplate=PromptTemplate,
         MaxExamples=5,
         Client=Client
@@ -64,18 +66,18 @@ def Main() -> None:
     print(f"\nFinal Accuracy: {FinalAccuracy:.4f}")
     
     print("\n--- Baseline Comparison ---")
-    BaselineEvaluator = EvaluatePrompt(ValidateData, ["Text"], "Expected", PromptTemplate, Client)
+    BaselineEvaluator = EvaluatePrompt(ValidateData, ["Text"], LabelColumn, PromptTemplate, Client)
     BaselineAccuracy, _ = BaselineEvaluator.RunEvaluation()
     print(f"Baseline (zero-shot): {BaselineAccuracy:.4f}")
     print(f"Optimized (few-shot): {FinalAccuracy:.4f}")
     print(f"Improvement: {FinalAccuracy - BaselineAccuracy:.4f}")
     
     print("\n--- Test Set Evaluation ---")
-    TestEvaluator = EvaluatePrompt(TestData, ["Text"], "Expected", OptimizedPrompt, Client)
+    TestEvaluator = EvaluatePrompt(TestData, ["Text"], LabelColumn, OptimizedPrompt, Client)
     TestAccuracy, _ = TestEvaluator.RunEvaluation()
     print(f"Test Set Accuracy (with optimized prompt): {TestAccuracy:.4f}")
     
-    BaselineTestEvaluator = EvaluatePrompt(TestData, ["Text"], "Expected", PromptTemplate, Client)
+    BaselineTestEvaluator = EvaluatePrompt(TestData, ["Text"], LabelColumn, PromptTemplate, Client)
     BaselineTestAccuracy, _ = BaselineTestEvaluator.RunEvaluation()
     print(f"Test Set Baseline Accuracy: {BaselineTestAccuracy:.4f}")
     print(f"Test Set Improvement: {TestAccuracy - BaselineTestAccuracy:.4f}")
