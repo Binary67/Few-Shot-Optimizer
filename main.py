@@ -1,6 +1,9 @@
 import pandas as pd
 from dotenv import load_dotenv
-from OptimizationPipeline import OptimizationPipeline
+from DataSplitter import DataSplitter
+from FewShotOptimizer import FewShotOptimizer
+from EvaluatePrompt import EvaluatePrompt
+from SaveResults import SaveResults
 
 
 def Main() -> None:
@@ -16,7 +19,7 @@ def Main() -> None:
     FeatureColumns = ["Text"]
     LabelColumns = ["IsAspiration", "Substring"]
 
-    # Load or create your dataframe here
+    # Load or create your dataframe here with additional examples
     Data = [
         {
             "Text": "I aspire to become a data scientist one day",
@@ -43,19 +46,68 @@ def Main() -> None:
             "IsAspiration": "has_aspiration",
             "Substring": "start my own company"
         },
+        {
+            "Text": "I'm planning to enroll in a graduate program next year",
+            "IsAspiration": "has_aspiration",
+            "Substring": "enroll in a graduate program"
+        },
+        {
+            "Text": "Coffee is my favorite beverage",
+            "IsAspiration": "no_aspiration",
+            "Substring": ""
+        },
+        {
+            "Text": "My goal is to become a senior software engineer",
+            "IsAspiration": "has_aspiration",
+            "Substring": "become a senior software engineer"
+        },
+        {
+            "Text": "The weather is nice today",
+            "IsAspiration": "no_aspiration",
+            "Substring": ""
+        },
+        {
+            "Text": "I hope to write a novel someday",
+            "IsAspiration": "has_aspiration",
+            "Substring": "write a novel"
+        }
     ]
     DataFrame = pd.DataFrame(Data)
 
-    Pipeline = OptimizationPipeline(
-        DataFrame=DataFrame,
+    Splitter = DataSplitter(DataFrame)
+    TrainData, ValidateData, _ = Splitter.Split()
+
+    Optimizer = FewShotOptimizer(
+        TrainData=TrainData,
+        ValidateData=ValidateData,
         FeatureColumns=FeatureColumns,
         LabelColumns=LabelColumns,
-        PromptTemplate=PromptTemplate,
+        BasePromptTemplate=PromptTemplate,
         MaxExamples=5,
-        YamlPath=YamlPath,
     )
 
-    Pipeline.Run()
+    Optimizer.OptimizeGreedy()
+
+    OptimizedPrompt = Optimizer.GetOptimizedPrompt()
+
+    Validator = EvaluatePrompt(
+        ValidateData,
+        FeatureColumns,
+        LabelColumns,
+        OptimizedPrompt,
+    )
+    Accuracy, _ = Validator.RunEvaluation()
+
+    ResultsSaver = SaveResults(YamlPath)
+    ResultsSaver.SaveBestExamplesAndAccuracy(
+        BestExamples=Optimizer.BestExamples,
+        FinalAccuracy=Accuracy,
+        OptimizedPrompt=OptimizedPrompt,
+        BaselineAccuracy=Optimizer.BaselineAccuracy,
+        PromptTemplate=PromptTemplate,
+    )
+
+    print(f"Validation accuracy with optimized prompt: {Accuracy:.4f}")
 
 if __name__ == "__main__":
     Main()
