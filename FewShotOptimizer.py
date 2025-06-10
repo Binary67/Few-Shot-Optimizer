@@ -33,7 +33,10 @@ class FewShotOptimizer:
             ExampleInput = self.BasePromptTemplate.format(**FeatureValues)
             OutputDict = {Label: Example[Label] for Label in self.LabelColumns}
             ExampleOutput = json.dumps(OutputDict)
-            ExampleTexts.append(f"Input: {ExampleInput}\nOutput: {ExampleOutput}")
+            ExampleOutputEscaped = ExampleOutput.replace('{', '{{').replace('}', '}}')
+            ExampleTexts.append(
+                f"Input: {ExampleInput}\nOutput: {ExampleOutputEscaped}"
+            )
         
         FewShotSection = "\n\n".join(ExampleTexts)
         return f"Here are some examples:\n\n{FewShotSection}\n\nNow, please respond to:\n{self.BasePromptTemplate}"
