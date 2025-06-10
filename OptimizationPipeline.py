@@ -11,7 +11,7 @@ class OptimizationPipeline:
     def __init__(self,
                  DataFrame: pd.DataFrame,
                  FeatureColumns: list[str],
-                 LabelColumn: str,
+                 LabelColumns: list[str],
                  PromptTemplate: str,
                  MaxExamples: int = 5,
                  YamlPath: str = "OptimizedResults.yaml",
@@ -20,7 +20,7 @@ class OptimizationPipeline:
         load_dotenv()
         self.DataFrame = DataFrame.copy()
         self.FeatureColumns = FeatureColumns
-        self.LabelColumn = LabelColumn
+        self.LabelColumns = LabelColumns
         self.PromptTemplate = PromptTemplate
         self.MaxExamples = MaxExamples
         self.YamlPath = YamlPath
@@ -39,7 +39,7 @@ class OptimizationPipeline:
             TrainData=TrainData,
             ValidateData=ValidateData,
             FeatureColumns=self.FeatureColumns,
-            LabelColumn=self.LabelColumn,
+            LabelColumns=self.LabelColumns,
             BasePromptTemplate=self.PromptTemplate,
             MaxExamples=self.MaxExamples,
             Client=self.Client,
@@ -50,7 +50,7 @@ class OptimizationPipeline:
         BaselineEvaluator = EvaluatePrompt(
             ValidateData,
             self.FeatureColumns,
-            self.LabelColumn,
+            self.LabelColumns,
             self.PromptTemplate,
             self.Client,
         )
@@ -59,7 +59,7 @@ class OptimizationPipeline:
         TestEvaluator = EvaluatePrompt(
             TestData,
             self.FeatureColumns,
-            self.LabelColumn,
+            self.LabelColumns,
             OptimizedPrompt,
             self.Client,
         )
@@ -68,7 +68,7 @@ class OptimizationPipeline:
         BaselineTestEvaluator = EvaluatePrompt(
             TestData,
             self.FeatureColumns,
-            self.LabelColumn,
+            self.LabelColumns,
             self.PromptTemplate,
             self.Client,
         )

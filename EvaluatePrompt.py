@@ -1,6 +1,7 @@
 import os
 import concurrent.futures
 from typing import Tuple
+import json
 import time
 import random
 
@@ -9,11 +10,11 @@ import openai
 from dotenv import load_dotenv
 
 class EvaluatePrompt:
-    def __init__(self, DataFrame: pd.DataFrame, FeatureColumns: list[str], LabelColumn: str, PromptTemplate: str, Client: openai.AzureOpenAI | None = None) -> None:
+    def __init__(self, DataFrame: pd.DataFrame, FeatureColumns: list[str], LabelColumns: list[str], PromptTemplate: str, Client: openai.AzureOpenAI | None = None) -> None:
         load_dotenv()
         self.DataFrame = DataFrame.copy()
         self.FeatureColumns = FeatureColumns
-        self.LabelColumn = LabelColumn
+        self.LabelColumns = LabelColumns
         self.PromptTemplate = PromptTemplate
         self.Client = Client or openai.AzureOpenAI(
             api_key=os.getenv("AZURE_OPENAI_API_KEY"),
@@ -53,13 +54,16 @@ class EvaluatePrompt:
         TaskArgs = [(Index, Row, ModelName, Temperature) for Index, Row in self.DataFrame.iterrows()]
         
         Results = {}
-        
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=MaxWorkers) as Executor:
             FutureToIndex = {Executor.submit(self._GenerateSinglePrediction, Args): Args[0] for Args in TaskArgs}
-            
+
             for Future in concurrent.futures.as_completed(FutureToIndex):
                 Index, Prediction = Future.result()
-                Results[Index] = Prediction
+                try:
+                    Results[Index] = json.loads(Prediction)
+                except Exception:
+                    Results[Index] = {"Raw": Prediction}
         
         PredictionsList = [Results[Index] for Index in self.DataFrame.index]
         self.DataFrame["ModelPrediction"] = PredictionsList
@@ -68,7 +72,11 @@ class EvaluatePrompt:
     def CalculateAccuracy(self) -> float:
         if "ModelPrediction" not in self.DataFrame.columns:
             raise ValueError("Predictions have not been generated.")
-        Correct = (self.DataFrame["ModelPrediction"] == self.DataFrame[self.LabelColumn]).sum()
+        Correct = 0
+        for _, Row in self.DataFrame.iterrows():
+            Prediction = Row["ModelPrediction"]
+            if all(Prediction.get(Label) == Row[Label] for Label in self.LabelColumns):
+                Correct += 1
         return Correct / len(self.DataFrame)
 
     def RunEvaluation(self, Model: str | None = None, Temperature: float = 0.0):
