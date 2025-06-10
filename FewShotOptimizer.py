@@ -1,17 +1,18 @@
 import os
 import pandas as pd
 import openai
+import json
 from dotenv import load_dotenv
 from EvaluatePrompt import EvaluatePrompt
 
 class FewShotOptimizer:
-    def __init__(self, TrainData: pd.DataFrame, ValidateData: pd.DataFrame, FeatureColumns: list[str], 
-                 LabelColumn: str, BasePromptTemplate: str, MaxExamples: int = 5, Client: openai.AzureOpenAI | None = None) -> None:
+    def __init__(self, TrainData: pd.DataFrame, ValidateData: pd.DataFrame, FeatureColumns: list[str],
+                 LabelColumns: list[str], BasePromptTemplate: str, MaxExamples: int = 5, Client: openai.AzureOpenAI | None = None) -> None:
         load_dotenv()
         self.TrainData = TrainData.copy()
         self.ValidateData = ValidateData.copy()
         self.FeatureColumns = FeatureColumns
-        self.LabelColumn = LabelColumn
+        self.LabelColumns = LabelColumns
         self.BasePromptTemplate = BasePromptTemplate
         self.MaxExamples = MaxExamples
         self.Client = Client or openai.AzureOpenAI(
@@ -30,7 +31,8 @@ class FewShotOptimizer:
         for Example in Examples:
             FeatureValues = {Column: Example[Column] for Column in self.FeatureColumns}
             ExampleInput = self.BasePromptTemplate.format(**FeatureValues)
-            ExampleOutput = Example[self.LabelColumn]
+            OutputDict = {Label: Example[Label] for Label in self.LabelColumns}
+            ExampleOutput = json.dumps(OutputDict)
             ExampleTexts.append(f"Input: {ExampleInput}\nOutput: {ExampleOutput}")
         
         FewShotSection = "\n\n".join(ExampleTexts)
@@ -38,7 +40,7 @@ class FewShotOptimizer:
 
     def EvaluateWithExamples(self, Examples: list[dict]) -> float:
         PromptTemplate = self.CreateFewShotPrompt(Examples)
-        Evaluator = EvaluatePrompt(self.ValidateData, self.FeatureColumns, self.LabelColumn, PromptTemplate, self.Client)
+        Evaluator = EvaluatePrompt(self.ValidateData, self.FeatureColumns, self.LabelColumns, PromptTemplate, self.Client)
         Accuracy, _ = Evaluator.RunEvaluation()
         return Accuracy
 
