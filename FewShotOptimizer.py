@@ -53,27 +53,30 @@ class FewShotOptimizer:
         AvailableExamples = self.TrainData.to_dict('records')
         
         for Iteration in range(self.MaxExamples):
+            if not AvailableExamples:
+                print("No more available examples to add.")
+                break
+
             print(f"\nIteration {Iteration + 1}/{self.MaxExamples}")
-            
+
             BestCandidate = None
-            BestCandidateAccuracy = BestAccuracy
-            
+            BestCandidateAccuracy = float('-inf')
+
             for Candidate in AvailableExamples:
                 TestExamples = self.BestExamples + [Candidate]
                 TestAccuracy = self.EvaluateWithExamples(TestExamples)
-                
+
                 if TestAccuracy > BestCandidateAccuracy:
                     BestCandidate = Candidate
                     BestCandidateAccuracy = TestAccuracy
-            
+
             if BestCandidate is None:
-                print(f"No improvement found. Stopping at {len(self.BestExamples)} examples.")
                 break
-            
+
             self.BestExamples.append(BestCandidate)
             AvailableExamples.remove(BestCandidate)
             BestAccuracy = BestCandidateAccuracy
-            
+
             print(f"Added example: {BestCandidate}")
             print(f"New accuracy: {BestAccuracy:.4f} (improvement: {BestAccuracy - self.BaselineAccuracy:.4f})")
         

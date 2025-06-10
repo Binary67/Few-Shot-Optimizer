@@ -51,17 +51,19 @@ def Main() -> None:
     )
 
     print("\n--- Few-Shot Optimization ---")
+    MaxExamples = 5
     Optimizer = FewShotOptimizer(
         TrainData=TrainData,
         ValidateData=ValidateData,
         FeatureColumns=["Text"],
         LabelColumn=LabelColumn,
         BasePromptTemplate=PromptTemplate,
-        MaxExamples=5,
+        MaxExamples=MaxExamples,
         Client=Client
     )
-    
+
     BestExamples, OptimizedPrompt, FinalAccuracy = Optimizer.OptimizeGreedy()
+    print(f"Examples used: {len(BestExamples)} / {MaxExamples}")
     
     print(f"\nFinal Accuracy: {FinalAccuracy:.4f}")
     
