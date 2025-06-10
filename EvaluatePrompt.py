@@ -1,4 +1,5 @@
 import os
+import re
 import concurrent.futures
 from typing import Tuple
 import time
@@ -14,12 +15,16 @@ class EvaluatePrompt:
         self.DataFrame = DataFrame.copy()
         self.FeatureColumns = FeatureColumns
         self.LabelColumn = LabelColumn
-        self.PromptTemplate = PromptTemplate
+        self.PromptTemplate = self.SanitizePlaceholders(PromptTemplate)
         self.Client = Client or openai.AzureOpenAI(
             api_key=os.getenv("AZURE_OPENAI_API_KEY"),
             azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
             api_version=os.getenv("OPENAI_API_VERSION"),
         )
+
+    @staticmethod
+    def SanitizePlaceholders(Template: str) -> str:
+        return re.sub(r"{['\"]([^'\"]+)['\"]}", r"{\1}", Template)
 
     def _GenerateSinglePrediction(self, Args: Tuple[int, pd.Series, str, float]) -> Tuple[int, str]:
         Index, Row, ModelName, Temperature = Args

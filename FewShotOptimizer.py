@@ -12,7 +12,7 @@ class FewShotOptimizer:
         self.ValidateData = ValidateData.copy()
         self.FeatureColumns = FeatureColumns
         self.LabelColumn = LabelColumn
-        self.BasePromptTemplate = BasePromptTemplate
+        self.BasePromptTemplate = EvaluatePrompt.SanitizePlaceholders(BasePromptTemplate)
         self.MaxExamples = MaxExamples
         self.Client = Client or openai.AzureOpenAI(
             api_key=os.getenv("AZURE_OPENAI_API_KEY"),

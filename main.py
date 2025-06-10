@@ -7,7 +7,7 @@ def Main() -> None:
     load_dotenv()
 
     YamlPath = "OptimizedResults.yaml"
-    PromptTemplate = 'Transform this greeting: {Text}'
+    PromptTemplate = 'Transform this greeting: {"Text"}'
 
     # Define feature columns and label column for your dataset
     FeatureColumns = ["Text"]
