@@ -7,14 +7,15 @@ from sklearn.model_selection import train_test_split
 from EvaluatePrompt import EvaluatePrompt
 from FewShotOptimizer import FewShotOptimizer
 from SaveResults import SaveResults
-from PromptTemplateLoader import LoadPromptTemplate
 
 
 def Main() -> None:
     load_dotenv()
     YamlPath = "OptimizedResults.yaml"
-    PromptTemplate = LoadPromptTemplate(YamlPath)
+    PromptTemplate = 'Transform this greeting: {Text}'
 
+    # Configuration - modify these to change feature columns and label
+    FeatureColumns = ["Text"]
     LabelColumn = "Expected"
 
     Data = [
@@ -55,7 +56,7 @@ def Main() -> None:
     Optimizer = FewShotOptimizer(
         TrainData=TrainData,
         ValidateData=ValidateData,
-        FeatureColumns=["Text"],
+        FeatureColumns=FeatureColumns,
         LabelColumn=LabelColumn,
         BasePromptTemplate=PromptTemplate,
         MaxExamples=MaxExamples,
@@ -68,18 +69,18 @@ def Main() -> None:
     print(f"\nFinal Accuracy: {FinalAccuracy:.4f}")
     
     print("\n--- Baseline Comparison ---")
-    BaselineEvaluator = EvaluatePrompt(ValidateData, ["Text"], LabelColumn, PromptTemplate, Client)
+    BaselineEvaluator = EvaluatePrompt(ValidateData, FeatureColumns, LabelColumn, PromptTemplate, Client)
     BaselineAccuracy, _ = BaselineEvaluator.RunEvaluation()
     print(f"Baseline (zero-shot): {BaselineAccuracy:.4f}")
     print(f"Optimized (few-shot): {FinalAccuracy:.4f}")
     print(f"Improvement: {FinalAccuracy - BaselineAccuracy:.4f}")
     
     print("\n--- Test Set Evaluation ---")
-    TestEvaluator = EvaluatePrompt(TestData, ["Text"], LabelColumn, OptimizedPrompt, Client)
+    TestEvaluator = EvaluatePrompt(TestData, FeatureColumns, LabelColumn, OptimizedPrompt, Client)
     TestAccuracy, _ = TestEvaluator.RunEvaluation()
     print(f"Test Set Accuracy (with optimized prompt): {TestAccuracy:.4f}")
     
-    BaselineTestEvaluator = EvaluatePrompt(TestData, ["Text"], LabelColumn, PromptTemplate, Client)
+    BaselineTestEvaluator = EvaluatePrompt(TestData, FeatureColumns, LabelColumn, PromptTemplate, Client)
     BaselineTestAccuracy, _ = BaselineTestEvaluator.RunEvaluation()
     print(f"Test Set Baseline Accuracy: {BaselineTestAccuracy:.4f}")
     print(f"Test Set Improvement: {TestAccuracy - BaselineTestAccuracy:.4f}")
