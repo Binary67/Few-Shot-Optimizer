@@ -1,0 +1,67 @@
+1. [ ] **Ingest & Validate Training Data**  
+   - Load the DataFrame, ensuring columns are exactly `Input` and `Label`.  
+   - Confirm each `Input` is `str`; coerce or raise if not.  
+   - Normalize `Label` so “single string” and “list of strings” variants share one representation (e.g., always store as `List[str]`).  
+   - Optionally create a **dev set** (e.g., 80 % train / 20 % dev) for offline prompt evaluation.  
+
+2. [ ] **Select & Freeze Few-Shot Examples**  
+   - Hand-pick *N* representative rows; write them to a dedicated YAML/JSON file for easy editing.  
+   - Implement `BuildFewShotSection(few_shot_examples: List[Dict]) -> str` that formats these rows into the desired shot block.  
+   - Add a unit test that checks the string rendering against a golden-master snapshot.  
+
+3. [ ] **Design Prompt Template Function**  
+   - Draft a canonical template containing:  
+     1. System message (“You are a helpful assistant…”).  
+     2. Few-shot section placeholder.  
+     3. User-input placeholder.  
+   - Code `ComposePrompt(system_msg: str, shot_block: str, user_input: str) -> str`.  
+   - Unit test with dummy inputs to verify final string resembles expected multiline prompt.  
+
+4. [ ] **Define Search Space for Prompt Variants**  
+   - Enumerate tunable dimensions (e.g., system-message wording, shot ordering, separator tokens, explicit instructions like “respond in JSON”).  
+   - Express the search grid as a list of dictionaries, one per candidate.  
+   - Make the grid JSON-serializable so you can tweak it without code edits.  
+
+5. [ ] **Implement Prompt Evaluation Loop**  
+   - Build `EvaluatePrompt(prompt_template, dev_df) -> float` that:  
+     - Calls Azure OpenAI with mockable wrapper `CallModel(prompt: str) -> str`.  
+     - Compares returned text to ground truth `Label` using simple `==`, casting lists to sorted tuples first.  
+     - Logs per-sample hits/misses for later introspection.  
+   - Add pytest fixtures to **mock** `CallModel` so unit tests incur zero tokens.  
+
+6. [ ] **Search Driver (Grid or Smarter)**  
+   - Iterate through all candidates, call `EvaluatePrompt`, and keep the highest-accuracy result.  
+   - Optionally parallelize with `concurrent.futures` while respecting Azure rate limits.  
+   - Implement early stopping if accuracy reaches 100 %.  
+
+7. [ ] **Persist & Surface the Best Prompt**  
+   - Dump winning prompt and metadata (accuracy, timestamp, parameters) to `output/best_prompt_<YYYYMMDD>.json`.  
+   - Provide `GetBestPrompt()` helper that loads the latest file programmatically.  
+   - Emit a concise summary to stdout for Databricks job logs.  
+
+8. [ ] **Package Structure & Entry Point**  
+   - Organize code as a mini-package:  
+     ```
+     /prompt_optim/
+       __init__.py
+       data_loader.py
+       prompt_template.py
+       search.py
+       evaluate.py
+       azure_client.py
+       utils.py
+     main.py
+     tests/
+     ```
+   - `main.py` orchestrates: load data → build grid → run search → save results.  
+   - Add argparse flags for dataset path, few-shot file, and optional dry-run (mock mode).  
+
+9. [ ] **Unit-Test Coverage**  
+   - Target ≥ 80 % coverage across pure-logic modules.  
+   - Include a dummy CSV and JSON few-shot file under `tests/assets`.  
+   - Ensure CI (or Databricks job) runs `pytest -q` before executing the real search.  
+
+10. [ ] **Lightweight Logging & Monitoring**  
+    - Integrate Python’s `logging` module with INFO-level progress bars via `tqdm`.  
+    - Record per-prompt timing to spot latency outliers.  
+    - Emit a warning if average latency exceeds a configurable threshold.  
