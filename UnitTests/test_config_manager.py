@@ -8,7 +8,7 @@ from ConfigManager import ConfigManager
 def TestConfigManagerLoadsParams():
     Manager = ConfigManager("ConfigParams.yaml")
     assert Manager.GetParam("TestSize") == 0.4
-    assert Manager.GetParam("InputColumns") == ["A", "B"]
+    assert Manager.GetParam("InputColumns") == ["talent_statement", "leadership_attribute"]
     assert Manager.GetParam("LabelColumn") == "Label"
 
 

@@ -1,0 +1,11 @@
+talent_statement,leadership_attribute,Label
+"Consistently meets deadlines and exceeds expectations",accountability,exhibit
+"Fails to communicate progress with the team",communication,not_exhibit
+"Motivates colleagues during challenging projects",inspiration,exhibit
+"Shows little initiative in taking on new responsibilities",initiative,not_exhibit
+"Provides clear direction and feedback to peers",guidance,exhibit
+"Avoids confronting problems directly",courage,not_exhibit
+"Collaborates effectively across departments",collaboration,exhibit
+"Rarely acknowledges team contributions",recognition,not_exhibit
+"Demonstrates adaptability when plans change",flexibility,exhibit
+"Ignores data when making important decisions",analysis,not_exhibit

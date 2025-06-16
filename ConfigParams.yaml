@@ -1,5 +1,5 @@
 TestSize: 0.4
 InputColumns:
-  - A
-  - B
+  - talent_statement
+  - leadership_attribute
 LabelColumn: Label
