@@ -1,5 +1,9 @@
+import os
+import sys
 import pandas as pd
 import pytest
+
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from DataLoader import DataLoader
 
 def TestValidateSchemaPasses():
