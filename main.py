@@ -1,9 +1,16 @@
 import pandas as pd
+import logging
 from DataLoader import DataLoader
 from ConfigManager import ConfigManager
+from LogManager import LogManager
 
 if __name__ == "__main__":
     Config = ConfigManager("ConfigParams.yaml")
+
+    LogMgr = LogManager()
+    LogFile = LogMgr.SetupLogging()
+    Logger = logging.getLogger(__name__)
+    Logger.info(f"Log file created at {LogFile}")
 
     SampleData = pd.read_csv("SampleData.csv")
 
@@ -13,7 +20,8 @@ if __name__ == "__main__":
 
     Loader = DataLoader(SampleData, InputColumns, LabelColumn)
     TrainX, TestX, TrainY, TestY = Loader.SplitDataset(TestSize=TestSize, RandomState=1)
-    print("TrainX shape:", TrainX.shape)
-    print("TestX shape:", TestX.shape)
-    print("TrainY shape:", TrainY.shape)
-    print("TestY shape:", TestY.shape)
+    Logger.info("TrainX shape: %s", TrainX.shape)
+    Logger.info("TestX shape: %s", TestX.shape)
+    Logger.info("TrainY shape: %s", TrainY.shape)
+    Logger.info("TestY shape: %s", TestY.shape)
+
