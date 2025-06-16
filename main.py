@@ -5,11 +5,7 @@ from ConfigManager import ConfigManager
 if __name__ == "__main__":
     Config = ConfigManager("ConfigParams.yaml")
 
-    SampleData = pd.DataFrame({
-        "A": [1, 2, 3, 4, 5],
-        "B": [5, 4, 3, 2, 1],
-        "Label": [0, 1, 0, 1, 0]
-    })
+    SampleData = pd.read_csv("SampleData.csv")
 
     InputColumns = Config.GetParam("InputColumns")
     LabelColumn = Config.GetParam("LabelColumn")
