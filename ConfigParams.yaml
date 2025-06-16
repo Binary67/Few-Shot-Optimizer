@@ -1,0 +1,5 @@
+TestSize: 0.4
+InputColumns:
+  - A
+  - B
+LabelColumn: Label
